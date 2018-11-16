@@ -16,15 +16,15 @@ poprawa czytelnosci kodu
 
 */
 var plansza [25][65]rune
-var pozycja_wezaX=4
-var pozycja_wezaY=10
+var pozycjaWezaX=4
+var pozycjaWezaY=10
 var clear map[string]func()
 var historiaWspolzednejX[10000] int
 var historiaWspolzednejY[10000] int
-var dlugosc_weza=3
-var ile=dlugosc_weza
-var pozycja_smakolykaX=13
-var pozycja_smakolykaY=10
+var dlugoscWeza=3
+var ile=dlugoscWeza
+var pozycjaSmakolykaX=13
+var pozycjaSmakolykaY=10
 var kierunek rune='R'
 var wynik int
 
@@ -81,7 +81,7 @@ func rysujPlansze(c chan bool) {
   fmt.Printf("Wynik: %d\n", wynik)
   for i:=0; i<25; i++{
     for j:=0; j<65; j++{
-            plansza[pozycja_wezaY][pozycja_wezaX]='■'
+            plansza[pozycjaWezaY][pozycjaWezaX]='■'
           fmt.Printf("%c", plansza[i][j])
     }
     fmt.Println(" ")
@@ -92,16 +92,16 @@ c <- true
 func sterujWezem() {
 
 if kierunek=='D'{//down
-  pozycja_wezaY++
+  pozycjaWezaY++
 }
 if kierunek=='U'{//up
-  pozycja_wezaY--
+  pozycjaWezaY--
 }
 if kierunek=='L'{//left
-  pozycja_wezaX--
+  pozycjaWezaX--
 }
 if kierunek=='R'{//right
-  pozycja_wezaX++
+  pozycjaWezaX++
 }
 
 char, _, err:=keyboard.GetSingleKey()
@@ -122,16 +122,39 @@ if (err != nil) {
     }
 }
 func sprawdzCzyZjadl() {
-  if pozycja_wezaX==pozycja_smakolykaX && pozycja_wezaY==pozycja_smakolykaY{
-    dlugosc_weza++
+  if pozycjaWezaX==pozycjaSmakolykaX && pozycjaWezaY==pozycjaSmakolykaY{
+    dlugoscWeza++
     wynik++
-    pozycja_smakolykaX=randomInt(1,65)
-    pozycja_smakolykaY=randomInt(1,25)
-    plansza[pozycja_smakolykaY][pozycja_smakolykaX]='$'
+    pozycjaSmakolykaX=randomInt(1,65)
+    pozycjaSmakolykaY=randomInt(1,25)
+    plansza[pozycjaSmakolykaY][pozycjaSmakolykaX]='$'
   }
 
 }
+func sprawdzCzyUmarl() bool{
 
+  for i:=0; i<25; i++{
+  if pozycjaWezaY==i && pozycjaWezaX==0 {
+    return true
+  }
+}
+  for i:=0; i<25; i++{
+  if pozycjaWezaY==i && pozycjaWezaX==64{
+      return true
+  }
+}
+  for i:=0; i<65; i++{
+    if pozycjaWezaY==0 && pozycjaWezaX==i{
+      return true
+  }
+}
+  for i:=0; i<65; i++{
+    if pozycjaWezaY==24 && pozycjaWezaX==i{
+      return true
+    }
+  }
+  return false
+}
 func main() {
 rand.Seed(time.Now().UnixNano())
 c := make(chan bool)
@@ -140,16 +163,19 @@ plansza=stworzPlansze()
 
 for{
       ile++
-      historiaWspolzednejX[ile]=pozycja_wezaX
-      historiaWspolzednejY[ile]=pozycja_wezaY
+      historiaWspolzednejX[ile]=pozycjaWezaX
+      historiaWspolzednejY[ile]=pozycjaWezaY
 
 sprawdzCzyZjadl()
+if sprawdzCzyUmarl() == true {
+break
+}
 
 
 
 go sterujWezem()
 
-plansza[historiaWspolzednejY[ile-dlugosc_weza]][historiaWspolzednejX[ile-dlugosc_weza]]=' '
+plansza[historiaWspolzednejY[ile-dlugoscWeza]][historiaWspolzednejX[ile-dlugoscWeza]]=' '
 
 go rysujPlansze(c)
 time.Sleep((1/2)*time.Second)
@@ -157,4 +183,6 @@ time.Sleep((1/2)*time.Second)
 
       CallClear()
 }
+fmt.Printf("przykro mi ale sie wywaliles, twój wynik: %d", wynik)
+
 }
