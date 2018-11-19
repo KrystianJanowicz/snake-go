@@ -10,23 +10,27 @@ import (
   "github.com/eiannone/keyboard"
 )
 /* TO DO:
-
-ranking
-poprawa czytelnosci kodu
-
+DUŻY COMMIT:
+-wąż nie może zawracać-
+-dwie plansze-
+-proste menu-
+-waz ma wolniejsze tempo-
 */
-var plansza [25][65]rune
-var pozycjaWezaX=4
+const szerokoscPlanszy=65
+const dlugoscPlanszy=25
+var plansza [dlugoscPlanszy][szerokoscPlanszy]rune
+var pozycjaWezaX=10
 var pozycjaWezaY=10
 var clear map[string]func()
 var historiaWspolzednejX[10000] int
 var historiaWspolzednejY[10000] int
-var dlugoscWeza=3
+var dlugoscWeza=10
 var ile=dlugoscWeza
 var pozycjaSmakolykaX=13
 var pozycjaSmakolykaY=10
 var kierunek rune='R'
 var wynik int
+var wybor int
 
 func init() {
     clear = make(map[string]func())
@@ -52,35 +56,54 @@ func CallClear() {
         panic("nieznana platforma")
     }
 }
-func stworzPlansze() [25][65]rune {
+func reset() {
+pozycjaWezaX=10
+pozycjaWezaY=10
+dlugoscWeza=10
+ile=dlugoscWeza
+kierunek='R'
+}
+func stworzPlanszeZRamka() [dlugoscPlanszy][szerokoscPlanszy]rune {
 
-var plansza [25][65]rune
+var plansza [dlugoscPlanszy][szerokoscPlanszy]rune
 
-for j:=0; j<65; j++{
-  for i:=0; i<25; i++{
+for j:=0; j<szerokoscPlanszy; j++{
+  for i:=0; i<dlugoscPlanszy; i++{
     plansza[i][j]=' '
   }
 }
 
-for i:=0; i<25; i++{
-  plansza[i][0]='!'
+for i:=0; i<dlugoscPlanszy; i++{
+  plansza[i][0]='a'
 }
-for i:=0; i<25; i++{
-  plansza[i][64]='!'
+for i:=0; i<dlugoscPlanszy; i++{
+  plansza[i][szerokoscPlanszy-1]='s'
 }
-for i:=0; i<65; i++{
-  plansza[0][i]='!'
+for i:=0; i<szerokoscPlanszy; i++{
+  plansza[0][i]='d'
 }
-for i:=0; i<65; i++{
-  plansza[24][i]='!'
+for i:=0; i<szerokoscPlanszy; i++{
+  plansza[dlugoscPlanszy-1][i]='b'
 
 }
 return plansza
 }
+func stworzPlanszeBez() [dlugoscPlanszy][szerokoscPlanszy]rune {
+
+var plansza [dlugoscPlanszy][szerokoscPlanszy]rune
+
+for j:=0; j<szerokoscPlanszy; j++{
+  for i:=0; i<dlugoscPlanszy; i++{
+    plansza[i][j]=' '
+  }
+}
+
+return plansza
+}
 func rysujPlansze(c chan bool) {
   fmt.Printf("Wynik: %d\n", wynik)
-  for i:=0; i<25; i++{
-    for j:=0; j<65; j++{
+  for i:=0; i<dlugoscPlanszy; i++{
+    for j:=0; j<szerokoscPlanszy; j++{
             plansza[pozycjaWezaY][pozycjaWezaX]='■'
           fmt.Printf("%c", plansza[i][j])
     }
@@ -90,6 +113,7 @@ func rysujPlansze(c chan bool) {
 c <- true
 }
 func sterujWezem() {
+var nowyKierunek rune
 
 if kierunek=='D'{//down
   pozycjaWezaY++
@@ -108,58 +132,89 @@ char, _, err:=keyboard.GetSingleKey()
 if (err != nil) {
     panic(err)
 }
+
     if char=='s'{
-      kierunek='D'
+      nowyKierunek='D'
     }
     if char=='w'{
-      kierunek='U'
+      nowyKierunek='U'
     }
     if char=='a'{
-      kierunek='L'
+      nowyKierunek='L'
     }
     if char=='d'{
-      kierunek='R'
+      nowyKierunek='R'
     }
+    if   kierunek=='U' && nowyKierunek=='D' || kierunek=='D' && nowyKierunek=='U' || kierunek=='L' && nowyKierunek=='R' || kierunek=='R' && nowyKierunek=='L'{
+      nowyKierunek=kierunek
+    } else  {
+    kierunek=nowyKierunek
+  }
 }
 func sprawdzCzyZjadl() {
   if pozycjaWezaX==pozycjaSmakolykaX && pozycjaWezaY==pozycjaSmakolykaY{
     dlugoscWeza++
     wynik++
-    pozycjaSmakolykaX=randomInt(1,65)
-    pozycjaSmakolykaY=randomInt(1,25)
-    plansza[pozycjaSmakolykaY][pozycjaSmakolykaX]='$'
+    pozycjaSmakolykaX=randomInt(1,szerokoscPlanszy)
+    pozycjaSmakolykaY=randomInt(1,dlugoscPlanszy)
+    plansza[pozycjaSmakolykaY-1][pozycjaSmakolykaX-1]='$'
   }
 
 }
-func sprawdzCzyUmarl() bool{
+func sprawdzCzyUmarlRamka() bool{
 
-  for i:=0; i<25; i++{
+  for i:=0; i<dlugoscPlanszy; i++{
   if pozycjaWezaY==i && pozycjaWezaX==0 {
     return true
   }
 }
-  for i:=0; i<25; i++{
-  if pozycjaWezaY==i && pozycjaWezaX==64{
+  for i:=0; i<dlugoscPlanszy; i++{
+  if pozycjaWezaY==i && pozycjaWezaX==szerokoscPlanszy-1{
       return true
   }
 }
-  for i:=0; i<65; i++{
+  for i:=0; i<szerokoscPlanszy; i++{
     if pozycjaWezaY==0 && pozycjaWezaX==i{
       return true
   }
 }
-  for i:=0; i<65; i++{
-    if pozycjaWezaY==24 && pozycjaWezaX==i{
+  for i:=0; i<szerokoscPlanszy; i++{
+    if pozycjaWezaY==dlugoscPlanszy-1 && pozycjaWezaX==i{
       return true
     }
   }
   return false
 }
-func main() {
-rand.Seed(time.Now().UnixNano())
-c := make(chan bool)
-plansza=stworzPlansze()
+func sprawdzCzyUmarlBez() bool{
 
+if pozycjaWezaX==szerokoscPlanszy-1{
+  pozycjaWezaX=1
+}
+if pozycjaWezaX==0{
+  pozycjaWezaX=szerokoscPlanszy-1
+}
+if pozycjaWezaY==dlugoscPlanszy-1{
+  pozycjaWezaY=1
+}
+if pozycjaWezaY==0{
+  pozycjaWezaY=dlugoscPlanszy-1
+}
+
+  return false
+}
+func start() {
+  fmt.Println("SNAKE. wybierz 1 aby grać bez ramki, 0 aby grać z")
+fmt.Scan(&wybor)
+rand.Seed(time.Now().UnixNano())
+
+c := make(chan bool)
+if wybor==1{
+plansza=stworzPlanszeBez()
+}
+
+if wybor==0{
+plansza=stworzPlanszeZRamka()
+}
 
 for{
       ile++
@@ -167,22 +222,33 @@ for{
       historiaWspolzednejY[ile]=pozycjaWezaY
 
 sprawdzCzyZjadl()
-if sprawdzCzyUmarl() == true {
+if wybor==1{
+if sprawdzCzyUmarlBez() == true {
+  reset()
 break
 }
-
-
-
+}
+if wybor==0{
+  if sprawdzCzyUmarlRamka() == true {
+    reset()
+  break
+  }
+}
 go sterujWezem()
 
 plansza[historiaWspolzednejY[ile-dlugoscWeza]][historiaWspolzednejX[ile-dlugoscWeza]]=' '
 
 go rysujPlansze(c)
-time.Sleep((1/2)*time.Second)
+time.Sleep(80000000*time.Nanosecond)
 <- c
 
       CallClear()
 }
-fmt.Printf("przykro mi ale sie wywaliles, twój wynik: %d", wynik)
+}
+func main() {
 
+for{
+start()
+fmt.Printf("przykro mi ale sie wywaliles, twój wynik: %d", wynik)
+}
 }
