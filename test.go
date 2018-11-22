@@ -9,12 +9,10 @@ import (
   "time"
   "github.com/eiannone/keyboard"
 )
-/* TO DO:
-DUŻY COMMIT:
--wąż nie może zawracać-
--dwie plansze-
--proste menu-
--waz ma wolniejsze tempo-
+/*
+commit zawiera:
+-wąż ginie od zjedzenia samego siebie-
+-smakołyk przyspieszający bieg węża-
 */
 const szerokoscPlanszy=65
 const dlugoscPlanszy=25
@@ -24,13 +22,17 @@ var pozycjaWezaY=10
 var clear map[string]func()
 var historiaWspolzednejX[10000] int
 var historiaWspolzednejY[10000] int
-var dlugoscWeza=10
+var dlugoscWeza=3
 var ile=dlugoscWeza
-var pozycjaSmakolykaX=13
+var pozycjaSmakolykaX=10
 var pozycjaSmakolykaY=10
 var kierunek rune='R'
-var wynik int
+var wynik=-1
 var wybor int
+var pozycjaBoosteraX int
+var pozycjaBoosteraY int
+var czyBoosterIstnieje=false
+var czasBoostera=0
 
 func init() {
     clear = make(map[string]func())
@@ -57,9 +59,12 @@ func CallClear() {
     }
 }
 func reset() {
+wynik=-1
+pozycjaSmakolykaX=10
+pozycjaSmakolykaY=10
 pozycjaWezaX=10
 pozycjaWezaY=10
-dlugoscWeza=10
+dlugoscWeza=3
 ile=dlugoscWeza
 kierunek='R'
 }
@@ -155,10 +160,24 @@ func sprawdzCzyZjadl() {
   if pozycjaWezaX==pozycjaSmakolykaX && pozycjaWezaY==pozycjaSmakolykaY{
     dlugoscWeza++
     wynik++
-    pozycjaSmakolykaX=randomInt(1,szerokoscPlanszy)
-    pozycjaSmakolykaY=randomInt(1,dlugoscPlanszy)
-    plansza[pozycjaSmakolykaY-1][pozycjaSmakolykaX-1]='$'
+    pozycjaSmakolykaX=randomInt(1,szerokoscPlanszy-1)
+    pozycjaSmakolykaY=randomInt(1,dlugoscPlanszy-1)
+    plansza[pozycjaSmakolykaY][pozycjaSmakolykaX]='$'
   }
+
+}
+func wygernerujISprawdzCzyZjadlBooster() {
+  if ile>50 && czyBoosterIstnieje==false {
+    pozycjaBoosteraX=randomInt(1,szerokoscPlanszy-1)
+    pozycjaBoosteraY=randomInt(1,dlugoscPlanszy-1)
+    plansza[pozycjaBoosteraY][pozycjaBoosteraX]='B'
+    czyBoosterIstnieje=true
+  }
+    if pozycjaWezaX==pozycjaBoosteraX && pozycjaWezaY==pozycjaBoosteraY{
+      czyBoosterIstnieje=false
+      czasBoostera=50
+    }
+
 
 }
 func sprawdzCzyUmarlRamka() bool{
@@ -183,10 +202,16 @@ func sprawdzCzyUmarlRamka() bool{
       return true
     }
   }
+  //waz zjada sam siebie
+  for i:=1;i<=dlugoscWeza;i++ {
+      if pozycjaWezaX==historiaWspolzednejX[ile-i] && pozycjaWezaY==historiaWspolzednejY[ile-i] {
+      return true
+      }
+    }
   return false
 }
 func sprawdzCzyUmarlBez() bool{
-
+//przechodzenie weza przez sciany
 if pozycjaWezaX==szerokoscPlanszy-1{
   pozycjaWezaX=1
 }
@@ -199,15 +224,23 @@ if pozycjaWezaY==dlugoscPlanszy-1{
 if pozycjaWezaY==0{
   pozycjaWezaY=dlugoscPlanszy-1
 }
-
-  return false
+//waz zjada sam siebie
+for i:=1;i<=dlugoscWeza;i++ {
+    if pozycjaWezaX==historiaWspolzednejX[ile-i] && pozycjaWezaY==historiaWspolzednejY[ile-i] {
+    return true
+    }
+  }
+return false
 }
-func start() {
-  fmt.Println("SNAKE. wybierz 1 aby grać bez ramki, 0 aby grać z")
-fmt.Scan(&wybor)
-rand.Seed(time.Now().UnixNano())
 
+func start() {
+
+fmt.Println("SNAKE. wybierz 1 aby grać bez ramki, 0 aby grać z")
+fmt.Scan(&wybor)
+
+rand.Seed(time.Now().UnixNano())
 c := make(chan bool)
+
 if wybor==1{
 plansza=stworzPlanszeBez()
 }
@@ -222,33 +255,41 @@ for{
       historiaWspolzednejY[ile]=pozycjaWezaY
 
 sprawdzCzyZjadl()
+
 if wybor==1{
-if sprawdzCzyUmarlBez() == true {
-  reset()
-break
-}
+  if sprawdzCzyUmarlBez() == true {
+  break
+  }
 }
 if wybor==0{
   if sprawdzCzyUmarlRamka() == true {
-    reset()
   break
   }
 }
 go sterujWezem()
-
 plansza[historiaWspolzednejY[ile-dlugoscWeza]][historiaWspolzednejX[ile-dlugoscWeza]]=' '
-
 go rysujPlansze(c)
-time.Sleep(80000000*time.Nanosecond)
-<- c
 
-      CallClear()
+wygernerujISprawdzCzyZjadlBooster()
+
+if czasBoostera>0{
+  time.Sleep(40000000*time.Nanosecond)
+  czasBoostera--
+}
+if czasBoostera<=0{
+  time.Sleep(80000000*time.Nanosecond)
+}
+
+<- c
+CallClear()
 }
 }
+
 func main() {
 
 for{
 start()
-fmt.Printf("przykro mi ale sie wywaliles, twój wynik: %d", wynik)
+fmt.Printf("przykro mi ale sie wywaliles, twój wynik: %d\n", wynik)
+reset()
 }
 }
