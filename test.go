@@ -9,30 +9,22 @@ import (
   "time"
   "github.com/eiannone/keyboard"
 )
+
 /*
 commit zawiera:
--wąż ginie od zjedzenia samego siebie-
--smakołyk przyspieszający bieg węża-
+-"optymalizacja kodu" wyrzucenie wielu zmiennych globalnych, usunięcie dwóch niepotrzebnych funkcji, usunięcie nadmiarowych linijek kodu
 */
+
 const szerokoscPlanszy=65
 const dlugoscPlanszy=25
+
 var plansza [dlugoscPlanszy][szerokoscPlanszy]rune
 var pozycjaWezaX=10
 var pozycjaWezaY=10
 var clear map[string]func()
-var historiaWspolzednejX[10000] int
-var historiaWspolzednejY[10000] int
 var dlugoscWeza=3
 var ile=dlugoscWeza
-var pozycjaSmakolykaX=10
-var pozycjaSmakolykaY=10
 var kierunek rune='R'
-var wynik=-1
-var wybor int
-var pozycjaBoosteraX int
-var pozycjaBoosteraY int
-var czyBoosterIstnieje=false
-var czasBoostera=0
 
 func init() {
     clear = make(map[string]func())
@@ -57,16 +49,6 @@ func CallClear() {
     } else {
         panic("nieznana platforma")
     }
-}
-func reset() {
-wynik=-1
-pozycjaSmakolykaX=10
-pozycjaSmakolykaY=10
-pozycjaWezaX=10
-pozycjaWezaY=10
-dlugoscWeza=3
-ile=dlugoscWeza
-kierunek='R'
 }
 func stworzPlanszeZRamka() [dlugoscPlanszy][szerokoscPlanszy]rune {
 
@@ -105,7 +87,7 @@ for j:=0; j<szerokoscPlanszy; j++{
 
 return plansza
 }
-func rysujPlansze(c chan bool) {
+func rysujPlansze(c chan bool, wynik int) {
   fmt.Printf("Wynik: %d\n", wynik)
   for i:=0; i<dlugoscPlanszy; i++{
     for j:=0; j<szerokoscPlanszy; j++{
@@ -156,7 +138,7 @@ if (err != nil) {
     kierunek=nowyKierunek
   }
 }
-func sprawdzCzyZjadl() {
+func sprawdzCzyZjadl(pozycjaSmakolykaX int, pozycjaSmakolykaY int, wynik int) (int, int, int) {
   if pozycjaWezaX==pozycjaSmakolykaX && pozycjaWezaY==pozycjaSmakolykaY{
     dlugoscWeza++
     wynik++
@@ -164,9 +146,9 @@ func sprawdzCzyZjadl() {
     pozycjaSmakolykaY=randomInt(1,dlugoscPlanszy-1)
     plansza[pozycjaSmakolykaY][pozycjaSmakolykaX]='$'
   }
-
+return pozycjaSmakolykaX, pozycjaSmakolykaY, wynik
 }
-func wygernerujISprawdzCzyZjadlBooster() {
+func wygernerujISprawdzCzyZjadlBooster(czyBoosterIstnieje bool, pozycjaBoosteraX int, pozycjaBoosteraY int, czasBoostera int) (bool, int, int, int) {
   if ile>50 && czyBoosterIstnieje==false {
     pozycjaBoosteraX=randomInt(1,szerokoscPlanszy-1)
     pozycjaBoosteraY=randomInt(1,dlugoscPlanszy-1)
@@ -177,10 +159,10 @@ func wygernerujISprawdzCzyZjadlBooster() {
       czyBoosterIstnieje=false
       czasBoostera=50
     }
-
+return czyBoosterIstnieje, pozycjaBoosteraX, pozycjaBoosteraY, czasBoostera
 
 }
-func sprawdzCzyUmarlRamka() bool{
+func sprawdzCzyUmarlRamka(historiaWspolzednejX[10000] int, historiaWspolzednejY[10000] int) bool{
 
   for i:=0; i<dlugoscPlanszy; i++{
   if pozycjaWezaY==i && pozycjaWezaX==0 {
@@ -210,7 +192,7 @@ func sprawdzCzyUmarlRamka() bool{
     }
   return false
 }
-func sprawdzCzyUmarlBez() bool{
+func sprawdzCzyUmarlBez(historiaWspolzednejX[10000] int, historiaWspolzednejY[10000] int) bool{
 //przechodzenie weza przez sciany
 if pozycjaWezaX==szerokoscPlanszy-1{
   pozycjaWezaX=1
@@ -232,8 +214,19 @@ for i:=1;i<=dlugoscWeza;i++ {
   }
 return false
 }
+func main() {
 
-func start() {
+for{
+  var wybor int
+  var pozycjaBoosteraX int
+  var pozycjaBoosteraY int
+  var historiaWspolzednejX[10000] int
+  var historiaWspolzednejY[10000] int
+  var czasBoostera=0
+  var pozycjaSmakolykaX=10
+  var pozycjaSmakolykaY=10
+  var wynik=-1
+  var czyBoosterIstnieje=false
 
 fmt.Println("SNAKE. wybierz 1 aby grać bez ramki, 0 aby grać z")
 fmt.Scan(&wybor)
@@ -254,23 +247,23 @@ for{
       historiaWspolzednejX[ile]=pozycjaWezaX
       historiaWspolzednejY[ile]=pozycjaWezaY
 
-sprawdzCzyZjadl()
+pozycjaSmakolykaX, pozycjaSmakolykaY, wynik=sprawdzCzyZjadl(pozycjaSmakolykaX, pozycjaSmakolykaY, wynik)
 
 if wybor==1{
-  if sprawdzCzyUmarlBez() == true {
+  if sprawdzCzyUmarlBez(historiaWspolzednejX, historiaWspolzednejY) == true {
   break
   }
 }
 if wybor==0{
-  if sprawdzCzyUmarlRamka() == true {
+  if sprawdzCzyUmarlRamka(historiaWspolzednejX, historiaWspolzednejY) == true {
   break
   }
 }
 go sterujWezem()
 plansza[historiaWspolzednejY[ile-dlugoscWeza]][historiaWspolzednejX[ile-dlugoscWeza]]=' '
-go rysujPlansze(c)
+go rysujPlansze(c, wynik)
 
-wygernerujISprawdzCzyZjadlBooster()
+czyBoosterIstnieje, pozycjaBoosteraX, pozycjaBoosteraY, czasBoostera=wygernerujISprawdzCzyZjadlBooster(czyBoosterIstnieje, pozycjaBoosteraX, pozycjaBoosteraY, czasBoostera)
 
 if czasBoostera>0{
   time.Sleep(40000000*time.Nanosecond)
@@ -283,13 +276,11 @@ if czasBoostera<=0{
 <- c
 CallClear()
 }
-}
-
-func main() {
-
-for{
-start()
 fmt.Printf("przykro mi ale sie wywaliles, twój wynik: %d\n", wynik)
-reset()
+pozycjaWezaX=10
+pozycjaWezaY=10
+dlugoscWeza=3
+ile=dlugoscWeza
+kierunek='R'
 }
 }
